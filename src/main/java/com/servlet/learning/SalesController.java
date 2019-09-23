@@ -1,7 +1,5 @@
-package com.servlet.learning.controllers;
+package com.servlet.learning;
 
-import com.servlet.learning.ResultWrapper;
-import com.servlet.learning.services.SalesService;
 import com.servlet.learning.util.DBHelper;
 
 import org.springframework.web.bind.annotation.RequestMapping;
