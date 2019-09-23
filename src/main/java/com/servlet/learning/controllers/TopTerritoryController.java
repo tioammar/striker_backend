@@ -1,4 +1,4 @@
-package com.servlet.learning;
+package com.servlet.learning.controllers;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -14,11 +14,15 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import com.servlet.learning.services.TTRService;
 import com.servlet.learning.TopDataWrapper;
 import com.servlet.learning.obj.Result;
 import com.servlet.learning.obj.STO;
 import com.servlet.learning.obj.TopResult;
 import com.servlet.learning.obj.Ubis;
+import com.servlet.learning.services.CollectionsService;
+import com.servlet.learning.services.GaulService;
+import com.servlet.learning.services.SalesService;
 import com.servlet.learning.util.DBConnectSQL;
 import com.servlet.learning.util.DBHelper;
 

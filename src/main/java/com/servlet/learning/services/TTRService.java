@@ -1,4 +1,4 @@
-package com.servlet.learning;
+package com.servlet.learning.services;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -10,11 +10,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.servlet.learning.ResultWrapper;
 import com.servlet.learning.obj.*;
 import com.servlet.learning.util.DBConnectSQL;
 import com.servlet.learning.util.DBHelper;;
 
-public class CollectionsService {
+public class TTRService {
 
   private String mClass;
   private int nBulan;
@@ -22,24 +23,24 @@ public class CollectionsService {
   Statement mStatement = null;
   ResultSet mResultSet = null;
 
-  private static final Logger LOGGER = Logger.getLogger(Collections.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(TTRService.class.getName());
 
-  public CollectionsService(String cls, int bln){
+  public TTRService(String cls, int bln){
     this.mClass = cls;
     this.nBulan = bln;
   }
 
-  public ResultWrapper getCollectionsTPT(){
+  public ResultWrapper getTTRtpt(){
     ResultWrapper data = new ResultWrapper();
     
-    List<Result> collections = getSTOcollections();
-    String status = collections != null ? DBHelper.GET_DATA_SUCESS : DBHelper.GET_DATA_FAILED_SQL_ERROR;
+    List<Result> sales = getSTOttr();
+    String status = sales != null ? DBHelper.GET_DATA_SUCESS : DBHelper.GET_DATA_FAILED_SQL_ERROR;
 
     LOGGER.info("sort data by achievement...");
-    Collections.sort(collections, new SortByAch());
+    Collections.sort(sales, new SortByAch());
 
     LOGGER.info("all process done...");
-    data.setData(status, collections);
+    data.setData(status, sales);
     return data;
   }
 
@@ -52,17 +53,17 @@ public class CollectionsService {
     return lbln < 10 ? "0"+lbln : ""+lbln;
   }
 
-  private List<Result> getSTOcollections(){
+  private List<Result> getSTOttr(){
     List<Result> data = new ArrayList<>();
     // setting up range
     String currentmonth = currentMonth(nBulan);
     String lastmonth = lastMonth(nBulan);
 
-    List<Result> collections = new ArrayList<>();
+    List<Result> ttr = new ArrayList<>();
     List<STO> sto = getSTObyClass();
     String stoList = buildString(sto);
     Connection conn = new DBConnectSQL().getConnection();
-    String query = "Select location, real_"+currentmonth+" as currentmonth, real_"+lastmonth+" as lastmonth from real_c3mr where location in ("+stoList+")";
+    String query = "Select location, real_"+currentmonth+" as currentmonth, real_"+lastmonth+" as lastmonth from real_ttr where location in ("+stoList+")";
     
     try {
       // LOGGER.info(query);
@@ -73,7 +74,7 @@ public class CollectionsService {
         String name = mResultSet.getString("location");
         Double current = mResultSet.getDouble("currentmonth");
         Double last = mResultSet.getDouble("lastmonth");
-        collections.add(new Result(name, "", current, 0.0, last));
+        ttr.add(new Result(name, "", current, 0.0, last));
       }
     } catch (SQLException e) {
       e.printStackTrace();
@@ -91,10 +92,10 @@ public class CollectionsService {
     for (STO n : sto) {
       Double current = 0.0;
       Double last = 0.0;
-      for (Result c : collections) {
-        if(c.getLocation().equals(n.getName())){
-          last = c.getLastMonth();
-          current = c.getCurrentMonth();
+      for (Result t : ttr) {
+        if(t.getLocation().equals(n.getName())){
+          last = t.getLastMonth();
+          current = t.getCurrentMonth();
         }
       }
       data.add(new Result(n.getName(), n.getWitel(), current, n.getTarget(), last));
@@ -121,9 +122,9 @@ public class CollectionsService {
     Connection conn = db.getConnection();
     String query = this.mClass.equals(DBHelper.GET_ALL_STO) ? 
     "select distinct a.sto_str, a.sto, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_c3mr b on a.sto_str=b.location where datel != 'N'" : 
+        +" as target from sto_profile a inner join tar_ttr b on a.sto_str=b.location where datel != 'N'" : 
     "select distinct a.sto_str, a.sto, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_c3mr b on a.sto_str=b.location where a.kelas = '"+this.mClass+"'";
+        +" as target from sto_profile a inner join tar_ttr b on a.sto_str=b.location where a.kelas = '"+this.mClass+"'";
     // LOGGER.info(query);
     try {
       mStatement = conn.createStatement();
@@ -140,6 +141,7 @@ public class CollectionsService {
       e.printStackTrace();
     } finally {
       try {
+        // if(conn != null) conn.close();
         if(mStatement != null) mStatement.close();
         if(mResultSet != null) mStatement.close();
       } catch (SQLException e){
@@ -148,14 +150,14 @@ public class CollectionsService {
     }
     return stoList;
   }
-  
-  public ResultWrapper getCollectionsUbis(){
+
+  public ResultWrapper getTTRubis(){
     ResultWrapper data = new ResultWrapper();
     Connection conn = new DBConnectSQL().getConnection();
 
-    List<Result> collectionsData = new ArrayList<>();
+    List<Result> ttrData = new ArrayList<>();
     List<Ubis> ubis = getUbis(conn);
-    List<Result> collections = getSTOcollections();
+    List<Result> ttr = getSTOttr();
 
     List<Double> sumCurrent = new ArrayList<>();
     List<Double> sumLast = new ArrayList<>();
@@ -167,22 +169,22 @@ public class CollectionsService {
       Double target = u.getTarget();
       List<String> sto = getSTO(conn, u.getLocation());
       for (String s : sto) {
-        for (Result c : collections){
-          if(c.getLocation().equals(s)){
-            sumCurrent.add(c.getCurrentMonth());
-            sumLast.add(c.getLastMonth());
+        for (Result t : ttr) {
+          if(t.getLocation().equals(s)){
+            sumCurrent.add(t.getCurrentMonth());
+            sumLast.add(t.getLastMonth());
           }
         }
       }
-      collectionsData.add(new Result(name, witel, average(sumCurrent), target, average(sumLast)));
+      ttrData.add(new Result(name, witel, average(sumCurrent), target, average(sumLast)));
       sumCurrent.clear();
       sumLast.clear();
     }
     LOGGER.info("sorting by achievement...");
-    Collections.sort(collectionsData, new SortByAch());
+    Collections.sort(ttrData, new SortByAch());
 
     LOGGER.info("Ubis/Datel process done...");
-    data.setData(DBHelper.GET_DATA_SUCESS, collectionsData);
+    data.setData(DBHelper.GET_DATA_SUCESS, ttrData);
     return data;
   }
 
@@ -202,7 +204,7 @@ public class CollectionsService {
     try {
       mStatement = conn.createStatement();
       mResultSet = mStatement.executeQuery("select distinct a.datel, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_c3mr b on a.datel=b.location where datel != 'N'");
+        +" as target from sto_profile a inner join tar_ttr b on a.datel=b.location where datel != 'N'");
       while(mResultSet.next()){
         String location = mResultSet.getString("datel");
         String witel = mResultSet.getString("witel");

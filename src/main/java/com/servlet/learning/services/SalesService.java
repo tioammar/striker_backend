@@ -1,4 +1,4 @@
-package com.servlet.learning;
+package com.servlet.learning.services;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 
 import com.servlet.learning.obj.STO;
 import com.servlet.learning.obj.Ubis;
+import com.servlet.learning.ResultWrapper;
 import com.servlet.learning.obj.Result;
 import com.servlet.learning.util.DBConnectNetezza;
 import com.servlet.learning.util.DBConnectSQL;

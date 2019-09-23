@@ -1,4 +1,4 @@
-package com.servlet.learning;
+package com.servlet.learning.services;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -10,11 +10,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.servlet.learning.ResultWrapper;
 import com.servlet.learning.obj.*;
 import com.servlet.learning.util.DBConnectSQL;
-import com.servlet.learning.util.DBHelper;;
+import com.servlet.learning.util.DBHelper;
 
-public class TTRService {
+public class GaulService {
 
   private String mClass;
   private int nBulan;
@@ -22,24 +23,24 @@ public class TTRService {
   Statement mStatement = null;
   ResultSet mResultSet = null;
 
-  private static final Logger LOGGER = Logger.getLogger(TTRService.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(GaulService.class.getName());
 
-  public TTRService(String cls, int bln){
+  public GaulService(String cls, int bln){
     this.mClass = cls;
     this.nBulan = bln;
   }
 
-  public ResultWrapper getTTRtpt(){
+  public ResultWrapper getGaulTPT(){
     ResultWrapper data = new ResultWrapper();
     
-    List<Result> sales = getSTOttr();
-    String status = sales != null ? DBHelper.GET_DATA_SUCESS : DBHelper.GET_DATA_FAILED_SQL_ERROR;
+    List<Result> gaul = getSTOgaul();
+    String status = gaul != null ? DBHelper.GET_DATA_SUCESS : DBHelper.GET_DATA_FAILED_SQL_ERROR;
 
     LOGGER.info("sort data by achievement...");
-    Collections.sort(sales, new SortByAch());
+    Collections.sort(gaul, new SortByAch());
 
     LOGGER.info("all process done...");
-    data.setData(status, sales);
+    data.setData(status, gaul);
     return data;
   }
 
@@ -52,17 +53,17 @@ public class TTRService {
     return lbln < 10 ? "0"+lbln : ""+lbln;
   }
 
-  private List<Result> getSTOttr(){
+  private List<Result> getSTOgaul(){
     List<Result> data = new ArrayList<>();
     // setting up range
     String currentmonth = currentMonth(nBulan);
     String lastmonth = lastMonth(nBulan);
 
-    List<Result> ttr = new ArrayList<>();
+    List<Result> gaul = new ArrayList<>();
     List<STO> sto = getSTObyClass();
     String stoList = buildString(sto);
     Connection conn = new DBConnectSQL().getConnection();
-    String query = "Select location, real_"+currentmonth+" as currentmonth, real_"+lastmonth+" as lastmonth from real_ttr where location in ("+stoList+")";
+    String query = "Select location, real_"+currentmonth+" as currentmonth, real_"+lastmonth+" as lastmonth from real_gaul where location in ("+stoList+")";
     
     try {
       // LOGGER.info(query);
@@ -73,7 +74,7 @@ public class TTRService {
         String name = mResultSet.getString("location");
         Double current = mResultSet.getDouble("currentmonth");
         Double last = mResultSet.getDouble("lastmonth");
-        ttr.add(new Result(name, "", current, 0.0, last));
+        gaul.add(new Result(name, "", current, 0.0, last));
       }
     } catch (SQLException e) {
       e.printStackTrace();
@@ -91,10 +92,10 @@ public class TTRService {
     for (STO n : sto) {
       Double current = 0.0;
       Double last = 0.0;
-      for (Result t : ttr) {
-        if(t.getLocation().equals(n.getName())){
-          last = t.getLastMonth();
-          current = t.getCurrentMonth();
+      for (Result g : gaul) {
+        if(g.getLocation().equals(n.getName())){
+          last = g.getLastMonth();
+          current = g.getCurrentMonth();
         }
       }
       data.add(new Result(n.getName(), n.getWitel(), current, n.getTarget(), last));
@@ -121,9 +122,9 @@ public class TTRService {
     Connection conn = db.getConnection();
     String query = this.mClass.equals(DBHelper.GET_ALL_STO) ? 
     "select distinct a.sto_str, a.sto, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_ttr b on a.sto_str=b.location where datel != 'N'" : 
+        +" as target from sto_profile a inner join tar_gaul b on a.sto_str=b.location where datel != 'N'" : 
     "select distinct a.sto_str, a.sto, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_ttr b on a.sto_str=b.location where a.kelas = '"+this.mClass+"'";
+        +" as target from sto_profile a inner join tar_gaul b on a.sto_str=b.location where a.kelas = '"+this.mClass+"'";
     // LOGGER.info(query);
     try {
       mStatement = conn.createStatement();
@@ -140,7 +141,6 @@ public class TTRService {
       e.printStackTrace();
     } finally {
       try {
-        // if(conn != null) conn.close();
         if(mStatement != null) mStatement.close();
         if(mResultSet != null) mStatement.close();
       } catch (SQLException e){
@@ -150,13 +150,13 @@ public class TTRService {
     return stoList;
   }
 
-  public ResultWrapper getTTRubis(){
+  public ResultWrapper getGaulUbis(){
     ResultWrapper data = new ResultWrapper();
     Connection conn = new DBConnectSQL().getConnection();
 
-    List<Result> ttrData = new ArrayList<>();
+    List<Result> gaulData = new ArrayList<>();
     List<Ubis> ubis = getUbis(conn);
-    List<Result> ttr = getSTOttr();
+    List<Result> gaul = getSTOgaul();
 
     List<Double> sumCurrent = new ArrayList<>();
     List<Double> sumLast = new ArrayList<>();
@@ -168,22 +168,22 @@ public class TTRService {
       Double target = u.getTarget();
       List<String> sto = getSTO(conn, u.getLocation());
       for (String s : sto) {
-        for (Result t : ttr) {
-          if(t.getLocation().equals(s)){
-            sumCurrent.add(t.getCurrentMonth());
-            sumLast.add(t.getLastMonth());
+        for (Result g : gaul){
+          if(g.getLocation().equals(s)){
+            sumCurrent.add(g.getCurrentMonth());
+            sumLast.add(g.getLastMonth());
           }
         }
       }
-      ttrData.add(new Result(name, witel, average(sumCurrent), target, average(sumLast)));
+      gaulData.add(new Result(name, witel, average(sumCurrent), target, average(sumLast)));
       sumCurrent.clear();
       sumLast.clear();
     }
     LOGGER.info("sorting by achievement...");
-    Collections.sort(ttrData, new SortByAch());
+    Collections.sort(gaulData, new SortByAch());
 
     LOGGER.info("Ubis/Datel process done...");
-    data.setData(DBHelper.GET_DATA_SUCESS, ttrData);
+    data.setData(DBHelper.GET_DATA_SUCESS, gaulData);
     return data;
   }
 
@@ -203,7 +203,7 @@ public class TTRService {
     try {
       mStatement = conn.createStatement();
       mResultSet = mStatement.executeQuery("select distinct a.datel, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_ttr b on a.datel=b.location where datel != 'N'");
+        +" as target from sto_profile a inner join tar_gaul b on a.datel=b.location where datel != 'N'");
       while(mResultSet.next()){
         String location = mResultSet.getString("datel");
         String witel = mResultSet.getString("witel");
@@ -246,8 +246,7 @@ public class TTRService {
 }
 
 // sort descending
-class SortByAch implements Comparator<Result> 
-{ 
+class SortByAch implements Comparator<Result> { 
     public int compare(Result a, Result b) { 
         return b.getAchievement().intValue() - a.getAchievement().intValue(); 
     } 

@@ -1,4 +1,4 @@
-package com.servlet.learning;
+package com.servlet.learning.services;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -10,11 +10,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.servlet.learning.ResultWrapper;
 import com.servlet.learning.obj.*;
 import com.servlet.learning.util.DBConnectSQL;
-import com.servlet.learning.util.DBHelper;
+import com.servlet.learning.util.DBHelper;;
 
-public class GaulService {
+public class CollectionsService {
 
   private String mClass;
   private int nBulan;
@@ -22,24 +23,24 @@ public class GaulService {
   Statement mStatement = null;
   ResultSet mResultSet = null;
 
-  private static final Logger LOGGER = Logger.getLogger(GaulService.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(Collections.class.getName());
 
-  public GaulService(String cls, int bln){
+  public CollectionsService(String cls, int bln){
     this.mClass = cls;
     this.nBulan = bln;
   }
 
-  public ResultWrapper getGaulTPT(){
+  public ResultWrapper getCollectionsTPT(){
     ResultWrapper data = new ResultWrapper();
     
-    List<Result> gaul = getSTOgaul();
-    String status = gaul != null ? DBHelper.GET_DATA_SUCESS : DBHelper.GET_DATA_FAILED_SQL_ERROR;
+    List<Result> collections = getSTOcollections();
+    String status = collections != null ? DBHelper.GET_DATA_SUCESS : DBHelper.GET_DATA_FAILED_SQL_ERROR;
 
     LOGGER.info("sort data by achievement...");
-    Collections.sort(gaul, new SortByAch());
+    Collections.sort(collections, new SortByAch());
 
     LOGGER.info("all process done...");
-    data.setData(status, gaul);
+    data.setData(status, collections);
     return data;
   }
 
@@ -52,17 +53,17 @@ public class GaulService {
     return lbln < 10 ? "0"+lbln : ""+lbln;
   }
 
-  private List<Result> getSTOgaul(){
+  private List<Result> getSTOcollections(){
     List<Result> data = new ArrayList<>();
     // setting up range
     String currentmonth = currentMonth(nBulan);
     String lastmonth = lastMonth(nBulan);
 
-    List<Result> gaul = new ArrayList<>();
+    List<Result> collections = new ArrayList<>();
     List<STO> sto = getSTObyClass();
     String stoList = buildString(sto);
     Connection conn = new DBConnectSQL().getConnection();
-    String query = "Select location, real_"+currentmonth+" as currentmonth, real_"+lastmonth+" as lastmonth from real_gaul where location in ("+stoList+")";
+    String query = "Select location, real_"+currentmonth+" as currentmonth, real_"+lastmonth+" as lastmonth from real_c3mr where location in ("+stoList+")";
     
     try {
       // LOGGER.info(query);
@@ -73,7 +74,7 @@ public class GaulService {
         String name = mResultSet.getString("location");
         Double current = mResultSet.getDouble("currentmonth");
         Double last = mResultSet.getDouble("lastmonth");
-        gaul.add(new Result(name, "", current, 0.0, last));
+        collections.add(new Result(name, "", current, 0.0, last));
       }
     } catch (SQLException e) {
       e.printStackTrace();
@@ -91,10 +92,10 @@ public class GaulService {
     for (STO n : sto) {
       Double current = 0.0;
       Double last = 0.0;
-      for (Result g : gaul) {
-        if(g.getLocation().equals(n.getName())){
-          last = g.getLastMonth();
-          current = g.getCurrentMonth();
+      for (Result c : collections) {
+        if(c.getLocation().equals(n.getName())){
+          last = c.getLastMonth();
+          current = c.getCurrentMonth();
         }
       }
       data.add(new Result(n.getName(), n.getWitel(), current, n.getTarget(), last));
@@ -121,9 +122,9 @@ public class GaulService {
     Connection conn = db.getConnection();
     String query = this.mClass.equals(DBHelper.GET_ALL_STO) ? 
     "select distinct a.sto_str, a.sto, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_gaul b on a.sto_str=b.location where datel != 'N'" : 
+        +" as target from sto_profile a inner join tar_c3mr b on a.sto_str=b.location where datel != 'N'" : 
     "select distinct a.sto_str, a.sto, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_gaul b on a.sto_str=b.location where a.kelas = '"+this.mClass+"'";
+        +" as target from sto_profile a inner join tar_c3mr b on a.sto_str=b.location where a.kelas = '"+this.mClass+"'";
     // LOGGER.info(query);
     try {
       mStatement = conn.createStatement();
@@ -148,14 +149,14 @@ public class GaulService {
     }
     return stoList;
   }
-
-  public ResultWrapper getGaulUbis(){
+  
+  public ResultWrapper getCollectionsUbis(){
     ResultWrapper data = new ResultWrapper();
     Connection conn = new DBConnectSQL().getConnection();
 
-    List<Result> gaulData = new ArrayList<>();
+    List<Result> collectionsData = new ArrayList<>();
     List<Ubis> ubis = getUbis(conn);
-    List<Result> gaul = getSTOgaul();
+    List<Result> collections = getSTOcollections();
 
     List<Double> sumCurrent = new ArrayList<>();
     List<Double> sumLast = new ArrayList<>();
@@ -167,22 +168,22 @@ public class GaulService {
       Double target = u.getTarget();
       List<String> sto = getSTO(conn, u.getLocation());
       for (String s : sto) {
-        for (Result g : gaul){
-          if(g.getLocation().equals(s)){
-            sumCurrent.add(g.getCurrentMonth());
-            sumLast.add(g.getLastMonth());
+        for (Result c : collections){
+          if(c.getLocation().equals(s)){
+            sumCurrent.add(c.getCurrentMonth());
+            sumLast.add(c.getLastMonth());
           }
         }
       }
-      gaulData.add(new Result(name, witel, average(sumCurrent), target, average(sumLast)));
+      collectionsData.add(new Result(name, witel, average(sumCurrent), target, average(sumLast)));
       sumCurrent.clear();
       sumLast.clear();
     }
     LOGGER.info("sorting by achievement...");
-    Collections.sort(gaulData, new SortByAch());
+    Collections.sort(collectionsData, new SortByAch());
 
     LOGGER.info("Ubis/Datel process done...");
-    data.setData(DBHelper.GET_DATA_SUCESS, gaulData);
+    data.setData(DBHelper.GET_DATA_SUCESS, collectionsData);
     return data;
   }
 
@@ -202,7 +203,7 @@ public class GaulService {
     try {
       mStatement = conn.createStatement();
       mResultSet = mStatement.executeQuery("select distinct a.datel, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_gaul b on a.datel=b.location where datel != 'N'");
+        +" as target from sto_profile a inner join tar_c3mr b on a.datel=b.location where datel != 'N'");
       while(mResultSet.next()){
         String location = mResultSet.getString("datel");
         String witel = mResultSet.getString("witel");
@@ -245,7 +246,8 @@ public class GaulService {
 }
 
 // sort descending
-class SortByAch implements Comparator<Result> { 
+class SortByAch implements Comparator<Result> 
+{ 
     public int compare(Result a, Result b) { 
         return b.getAchievement().intValue() - a.getAchievement().intValue(); 
     } 
