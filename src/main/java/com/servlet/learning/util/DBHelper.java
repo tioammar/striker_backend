@@ -12,4 +12,7 @@ public class DBHelper {
   public static int USER_LEVEL_DATE = 1;
   public static int USER_LEVEL_TPT = 2;
   public static int USER_LEVEL_GUEST = 3;
+
+  public static int REAL_REVERSE = 2;
+  public static int REAL_COMMON = 1;
 }

@@ -108,8 +108,8 @@ public class TTRService {
     int index = 0;
     String list = "";
     for (STO sto : stoList){
-      list += "'"+sto.getName()+"',";
       if(index == (size-1)) list += "'"+sto.getName()+"'";
+      else list += "'"+sto.getName()+"',";
       index++;
     }
     return list;

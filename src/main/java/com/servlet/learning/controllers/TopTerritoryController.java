@@ -32,9 +32,9 @@ public class TopTerritoryController {
   private ResultSet mResultSet;
   private Statement mStatement;
 
-  Double salesBobot = 0.3;
-  Double ttrBobot = 0.2;
-  Double gaulBobot = 0.2;
+  Double salesBobot = 0.4;
+  Double ttrBobot = 0.15;
+  Double gaulBobot = 0.15;
   Double c3mrBobot = 0.3;
 
   @RequestMapping(value = "/topterritory", method = RequestMethod.GET)

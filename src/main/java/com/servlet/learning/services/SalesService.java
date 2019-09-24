@@ -132,8 +132,8 @@ public class SalesService {
     int index = 0;
     String list = "";
     for (STO sto : stoList){
-      list += "'"+sto.getCodeName()+"',";
       if(index == (size-1)) list += "'"+sto.getCodeName()+"'";
+      else list += "'"+sto.getCodeName()+"',";
       index++;
     }
     return list;
@@ -146,9 +146,9 @@ public class SalesService {
     Connection conn = db.getConnection();
     String query = this.mClass.equals(DBHelper.GET_ALL_STO) ? 
     "select distinct a.sto_str, a.sto, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_sales b on a.sto_str=b.location where datel != 'N'" : 
+        +" as target from sto_profile a left join tar_sales b on a.sto_str=b.location where datel != 'N'" : 
     "select distinct a.sto_str, a.sto, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_sales b on a.sto_str=b.location where a.kelas = '"+this.mClass+"'";
+        +" as target from sto_profile a left join tar_sales b on a.sto_str=b.location where a.kelas = '"+this.mClass+"'";
     // LOGGER.info(query);
     try {
       mStatement = conn.createStatement();
