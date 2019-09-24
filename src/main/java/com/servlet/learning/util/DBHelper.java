@@ -8,4 +8,8 @@ public class DBHelper {
   public static String GET_DATA_FAILED_SQL_ERROR = "4";
 
   public static String GET_ALL_STO = "all";
+
+  public static int USER_LEVEL_DATE = 1;
+  public static int USER_LEVEL_TPT = 2;
+  public static int USER_LEVEL_GUEST = 3;
 }
