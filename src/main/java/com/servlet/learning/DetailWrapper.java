@@ -8,6 +8,8 @@ import com.servlet.learning.obj.Trend;
 public class DetailWrapper {
 
   private String mStatus;
+  private String mLocation;
+  private String mWitel;
   private List<Trend> salesTrend;
   private List<Trend> ttrTrend;
   private List<Trend> gaulTrend;
@@ -16,6 +18,14 @@ public class DetailWrapper {
   
   public String getStatus() {
     return mStatus;
+  }
+
+  public String getLocation(){
+    return mLocation;
+  }
+
+  public String getWitel(){
+    return mWitel;
   }
 
   public List<Trend> getSalesTrend() {
@@ -38,7 +48,7 @@ public class DetailWrapper {
     return currentPosition;
   }
 
-  public void setData(String status, List<Trend> salesTrend, List<Trend> ttrTrend, List<Trend> gaulTrend,
+  public void setData(String status, String location, String witel, List<Trend> salesTrend, List<Trend> ttrTrend, List<Trend> gaulTrend,
       List<Trend> c3mrTrend, List<Position> currentPosition) {
     this.mStatus = status;
     this.salesTrend = salesTrend;
@@ -46,5 +56,7 @@ public class DetailWrapper {
     this.gaulTrend = gaulTrend;
     this.c3mrTrend = c3mrTrend;
     this.currentPosition = currentPosition;
+    this.mLocation = location;
+    this.mWitel = witel;
   }
 }

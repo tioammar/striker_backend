@@ -65,7 +65,30 @@ public class SalesService {
     List<Result> sales = new ArrayList<>();
     List<STO> sto = getSTObyClass();
     String stoList = buildString(sto);
-    Connection conn = new DBConnectNetezza().getConnection();
+    // Connection conn = new DBConnectNetezza().getConnection();
+    Connection conn = new DBConnectSQL().getConnection();
+
+    String querySQL = "SELECT sto, sum(currentmonth) as currentmonth, sum(lastmonth) as lastmonth"
+    + " FROM ("
+    + " select sto, sum(case when DATE_FORMAT(tgl,'%Y%m') = '2019"+currentmonth+"' then 1 else 0 end) as currentmonth, sum(case when DATE_FORMAT(tgl,'%Y%m') = '2019"+lastmonth+"' then 1 else 0 end) as lastmonth from demand_internet_new"
+    + " where KAWASAN = 'DIVRE 7'"
+    + " and sto in ("+stoList+")"
+    + " and ETAT = '5'"
+    + " and STATUS = 'IHNETIZEN'"
+    + " and STATUS_DEMAND IN ('SALES NETIZEN','MIGRASI 2P TO 2P NETIZEN','MIGRASI NETIZEN')"
+    + " and DATE_FORMAT(tgl,'%Y%m') >= '2019"+lastmonth+"' and DATE_FORMAT(tgl,'%Y%m') <= '2019"+currentmonth+"'"
+    + " group by sto"
+    + " UNION ALL"
+    + " select sto, sum(case when DATE_FORMAT(tgl,'%Y%m') = '2019"+currentmonth+"' then 1 else 0 end) as currentmonth, sum(case when DATE_FORMAT(tgl,'%Y%m') = '2019"+lastmonth+"' then 1 else 0 end) as lastmonth FROM DEMAND_INDIHOME_NEW"
+    + " WHERE DATE_FORMAT(tgl,'%Y%m') >= '2019"+lastmonth+"' and DATE_FORMAT(tgl,'%Y%m') <= '2019"+currentmonth+"'"
+    + " and sto in ("+stoList+")"
+    + " AND ETAT = '5'"
+    + " AND STATUS_INDIHOME IN ('SALES_3P_BUNDLED','SALES_3P_UNBUNDLED','MIGRASI_1P_3P_UNBUNDLED','MIGRASI_2P_3P_UNBUNDLED','MIGRASI_1P_3P_BUNDLED','MIGRASI_2P_3P_BUNDLED')"
+    + " AND KAWASAN = 'DIVRE 7'"
+    + " group by sto)x"
+    + " group by sto"
+    + " order by sto";
+
     String query = "SELECT sto, sum(currentmonth) as currentmonth, sum(lastmonth) as lastmonth"
     + " FROM ("
     + " select sto, sum(case when TO_CHAR(tgl,'YYYYMM') = '2019"+currentmonth+"' then 1 else 0 end) as currentmonth, sum(case when TO_CHAR(tgl,'YYYYMM') = '2019"+lastmonth+"' then 1 else 0 end) as lastmonth from telkomCBD..demand_internet_new"
@@ -91,7 +114,7 @@ public class SalesService {
       // LOGGER.info(query);
       LOGGER.info("getting data...");
       mStatement = conn.createStatement();
-      mResultSet = mStatement.executeQuery(query);
+      mResultSet = mStatement.executeQuery(querySQL);
       while(mResultSet.next()){
         String name = mResultSet.getString("sto");
         Double current = mResultSet.getDouble("currentmonth");
@@ -216,7 +239,7 @@ public class SalesService {
     try {
       mStatement = conn.createStatement();
       mResultSet = mStatement.executeQuery("select distinct a.datel, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_sales b on a.datel=b.location where datel != 'N'");
+        +" as target from sto_profile a left join tar_sales b on a.datel=b.location where datel != 'N'");
       while(mResultSet.next()){
         String location = mResultSet.getString("datel");
         String witel = mResultSet.getString("witel");

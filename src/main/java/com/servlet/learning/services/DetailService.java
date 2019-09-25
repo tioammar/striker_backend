@@ -34,7 +34,8 @@ public class DetailService {
   public DetailWrapper getTPTDetail(){
     DetailWrapper data = new DetailWrapper();
     String tpt = getSTOName();
-    data.setData(DBHelper.GET_DATA_SUCESS, getSalesTPT(), 
+    String witel = getWitelTPT(tpt);
+    data.setData(DBHelper.GET_DATA_SUCESS, tpt, witel, getSalesTPT(), 
       getTrend("ttr", tpt), 
       getTrend("gaul", tpt), 
       getTrend("c3mr", tpt), 
@@ -42,10 +43,34 @@ public class DetailService {
     return data;
   }
 
-  public DetailWrapper getUbisDetail(){
+  private String getWitelTPT(String tpt) {
+    String witel = "";
+    Connection conn = new DBConnectSQL().getConnection();
+    String query = "select witel from sto_profile where sto_str = '"+tpt+"'";
+    try {
+      mStatement = conn.createStatement();
+      mResultSet = mStatement.executeQuery(query);
+      while(mResultSet.next()){
+        witel = mResultSet.getString("witel");
+      }
+    } catch (Exception e){
+      e.printStackTrace();
+    } finally {
+      try {
+        if(mStatement != null) mStatement.close();
+        if(mResultSet != null) mResultSet.close();
+      } catch (SQLException e){
+        e.printStackTrace();
+      }
+    }
+    return witel;
+  }
+
+  public DetailWrapper getUbisDetail() {
     DetailWrapper data = new DetailWrapper();
     String ubis = getUbisName();
-    data.setData(DBHelper.GET_DATA_SUCESS, 
+    String witel = getUbisWitel(ubis);
+    data.setData(DBHelper.GET_DATA_SUCESS, ubis, witel,
       getSalesUbis(ubis), 
       getTrend("ttr", ubis), 
       getTrend("gaul", ubis), 
@@ -54,7 +79,30 @@ public class DetailService {
     return data;
   }
 
-  private String currentMonth(int bln){
+  private String getUbisWitel(String ubis) {
+    String witel = "";
+    Connection conn = new DBConnectSQL().getConnection();
+    String query = "select witel from ubis where datel = '"+ubis+"'";
+    try {
+      mStatement = conn.createStatement();
+      mResultSet = mStatement.executeQuery(query);
+      while(mResultSet.next()){
+        witel = mResultSet.getString("witel");
+      }
+    } catch (Exception e){
+      e.printStackTrace();
+    } finally {
+      try {
+        if(mStatement != null) mStatement.close();
+        if(mResultSet != null) mResultSet.close();
+      } catch (SQLException e){
+        e.printStackTrace();
+      }
+    }
+    return witel;
+  }
+
+  private String currentMonth(int bln) {
     return bln < 10 ? "0"+bln : ""+bln;
   }
 
@@ -65,8 +113,32 @@ public class DetailService {
 
   private List<Trend> getSalesUbis(String ubis){
     List<Trend> data = new ArrayList<>();
-    Connection conn = new DBConnectNetezza().getConnection();
+    
+    // Connection conn = new DBConnectNetezza().getConnection();
+    Connection conn = new DBConnectSQL().getConnection();
+
     String stoList = buildString(getSTO(new DBConnectSQL().getConnection(), ubis));
+
+    String querySQL = "SELECT nmonth, sum(ach) as ach"
+    + " FROM ("
+    + " select DATE_FORMAT(tgl,'%m') as nmonth, count(ncli) as ach from demand_internet_new"
+    + " where KAWASAN = 'DIVRE 7'"
+    + " and ETAT = '5'"
+    + " and STATUS = 'IHNETIZEN'"
+    + " and STATUS_DEMAND IN ('SALES NETIZEN','MIGRASI 2P TO 2P NETIZEN','MIGRASI NETIZEN')"
+    + " and DATE_FORMAT(tgl,'%Y%m') >= '2019"+startMonth(nBulan)+"' and DATE_FORMAT(tgl,'%Y%m') <= '2019"+currentMonth(nBulan)+"'"
+    + " and sto in  ("+stoList+")"
+    + " group by DATE_FORMAT(tgl,'%m')"
+    + " UNION ALL"
+    + " select DATE_FORMAT(tgl,'%m') as nmonth, count(ncli) as ach FROM demand_indihome_new"  
+    + " WHERE DATE_FORMAT(tgl,'%Y%m') >= '2019"+startMonth(nBulan)+"' and DATE_FORMAT(tgl,'%Y%m') <= '2019"+currentMonth(nBulan)+"'"
+    + " AND ETAT = '5'"      
+    + " AND STATUS_INDIHOME IN ('SALES_3P_BUNDLED','SALES_3P_UNBUNDLED','MIGRASI_1P_3P_UNBUNDLED','MIGRASI_2P_3P_UNBUNDLED','MIGRASI_1P_3P_BUNDLED','MIGRASI_2P_3P_BUNDLED')"
+    + " AND sto in  ("+stoList+")"
+    + " group by DATE_FORMAT(tgl,'%m'))x"
+    + " group by nmonth"
+    + " order by nmonth";
+
     String query = "SELECT nmonth, sum(ach) as ach"
     + " FROM ("
     + " select TO_CHAR(tgl,'MM') as nmonth, count(ncli) as ach from telkomCBD..demand_internet_new"
@@ -86,11 +158,11 @@ public class DetailService {
     + " group by TO_CHAR(tgl,'MM'))x"
     + " group by nmonth"
     + " order by nmonth";
-    LOGGER.info(query);
+    LOGGER.info(querySQL);
 
     try {
       mStatement = conn.createStatement();
-      mResultSet = mStatement.executeQuery(query);
+      mResultSet = mStatement.executeQuery(querySQL);
       while(mResultSet.next()){
         String month = mResultSet.getString("nmonth");
         Double ach = mResultSet.getDouble("ach");
@@ -112,8 +184,30 @@ public class DetailService {
 
   private List<Trend> getSalesTPT(){
     List<Trend> data = new ArrayList<>();
-    Connection conn = new DBConnectNetezza().getConnection();
+    // Connection conn = new DBConnectNetezza().getConnection();
+    Connection conn = new DBConnectSQL().getConnection();
     String stoCode = getSTOcode();
+
+    String querySQL = "SELECT nmonth, sum(ach) as ach"
+    + " FROM ("
+    + " select DATE_FORMAT(tgl,'%m') as nmonth, count(ncli) as ach from demand_internet_new"
+    + " where KAWASAN = 'DIVRE 7'"
+    + " and ETAT = '5'"
+    + " and STATUS = 'IHNETIZEN'"
+    + " and STATUS_DEMAND IN ('SALES NETIZEN','MIGRASI 2P TO 2P NETIZEN','MIGRASI NETIZEN')"
+    + " and DATE_FORMAT(tgl,'%Y%m') >= '2019"+startMonth(nBulan)+"' and DATE_FORMAT(tgl,'%Y%m') <= '2019"+currentMonth(nBulan)+"'"
+    + " and sto = '"+stoCode+"'"
+    + " group by DATE_FORMAT(tgl,'%m')"
+    + " UNION ALL"
+    + " select DATE_FORMAT(tgl,'%m') as nmonth, count(ncli) as ach FROM demand_indihome_new"  
+    + " WHERE DATE_FORMAT(tgl,'%Y%m') >= '2019"+startMonth(nBulan)+"' and DATE_FORMAT(tgl,'%Y%m') <= '2019"+currentMonth(nBulan)+"'"
+    + " AND ETAT = '5'"      
+    + " AND STATUS_INDIHOME IN ('SALES_3P_BUNDLED','SALES_3P_UNBUNDLED','MIGRASI_1P_3P_UNBUNDLED','MIGRASI_2P_3P_UNBUNDLED','MIGRASI_1P_3P_BUNDLED','MIGRASI_2P_3P_BUNDLED')"
+    + " AND sto = '"+stoCode+"'"
+    + " group by DATE_FORMAT(tgl,'%m'))x"
+    + " group by nmonth"
+    + " order by nmonth";
+
     String query = "SELECT nmonth, sum(ach) as ach"
     + " FROM ("
     + " select TO_CHAR(tgl,'MM') as nmonth, count(ncli) as ach from telkomCBD..demand_internet_new"
@@ -133,11 +227,11 @@ public class DetailService {
     + " group by TO_CHAR(tgl,'MM'))x"
     + " group by nmonth"
     + " order by nmonth";
-    LOGGER.info(query);
+    LOGGER.info(querySQL);
 
     try {
       mStatement = conn.createStatement();
-      mResultSet = mStatement.executeQuery(query);
+      mResultSet = mStatement.executeQuery(querySQL);
       while(mResultSet.next()){
         String month = mResultSet.getString("nmonth");
         Double ach = mResultSet.getDouble("ach");

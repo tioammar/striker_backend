@@ -204,7 +204,7 @@ public class TTRService {
     try {
       mStatement = conn.createStatement();
       mResultSet = mStatement.executeQuery("select distinct a.datel, a.witel, b.tar_"+currentMonth(nBulan)
-        +" as target from sto_profile a inner join tar_ttr b on a.datel=b.location where datel != 'N'");
+        +" as target from sto_profile a left join tar_ttr b on a.datel=b.location where datel != 'N'");
       while(mResultSet.next()){
         String location = mResultSet.getString("datel");
         String witel = mResultSet.getString("witel");
