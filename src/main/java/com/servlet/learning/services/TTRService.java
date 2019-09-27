@@ -151,41 +151,101 @@ public class TTRService {
     return stoList;
   }
 
+  private String buildStringUbis(List<Ubis> list) {
+    int size = list.size();
+    int index = 0;
+    String data = "";
+    for (Ubis sto : list){
+      data += "'"+sto.getLocation()+"',";
+      if(index == (size-1)) data += "'"+sto.getLocation()+"'";
+      index++;
+    }
+    return data;
+  }
+
   public ResultWrapper getTTRubis(){
-    ResultWrapper data = new ResultWrapper();
+    // ResultWrapper data = new ResultWrapper();
+    // Connection conn = new DBConnectSQL().getConnection();
+
+    // List<Result> ttrData = new ArrayList<>();
+    // List<Ubis> ubis = getUbis(conn);
+    // List<Result> ttr = getSTOttr();
+
+    // List<Double> sumCurrent = new ArrayList<>();
+    // List<Double> sumLast = new ArrayList<>();
+
+    // LOGGER.info("mapping to Ubis/Datel");
+    // for (Ubis u : ubis) {
+    //   String name = u.getLocation();
+    //   String witel = u.getWitel();
+    //   Double target = u.getTarget();
+    //   List<String> sto = getSTO(conn, u.getLocation());
+    //   for (String s : sto) {
+    //     for (Result t : ttr) {
+    //       if(t.getLocation().equals(s)){
+    //         sumCurrent.add(t.getCurrentMonth());
+    //         sumLast.add(t.getLastMonth());
+    //       }
+    //     }
+    //   }
+    //   ttrData.add(new Result(name, witel, average(sumCurrent), target, average(sumLast)));
+    //   sumCurrent.clear();
+    //   sumLast.clear();
+    // }
+    // LOGGER.info("sorting by achievement...");
+    // Collections.sort(ttrData, new SortByAch());
+
+    // LOGGER.info("Ubis/Datel process done...");
+    // data.setData(DBHelper.GET_DATA_SUCESS, ttrData);
+    // return data;
+    String currentmonth = currentMonth(nBulan);
+    String lastmonth = lastMonth(nBulan);
+    ResultWrapper wrapper = new ResultWrapper();
     Connection conn = new DBConnectSQL().getConnection();
 
-    List<Result> ttrData = new ArrayList<>();
+    List<Result> collectionsData = new ArrayList<>();
+    List<Result> data = new ArrayList<>();
     List<Ubis> ubis = getUbis(conn);
-    List<Result> ttr = getSTOttr();
+    String ubisList = buildStringUbis(ubis);
+    String query = "Select location, real_"+currentmonth+" as currentmonth, real_"+lastmonth+" as lastmonth from real_ttr where location in ("+ubisList+")";
+    
+    try {
+      // LOGGER.info(query);
+      LOGGER.info("getting data...");
+      mStatement = conn.createStatement();
+      mResultSet = mStatement.executeQuery(query);
+      while(mResultSet.next()){
+        String name = mResultSet.getString("location");
+        Double current = mResultSet.getDouble("currentmonth");
+        Double last = mResultSet.getDouble("lastmonth");
+        collectionsData.add(new Result(name, "", current, 0.0, last));
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    } finally {
+      try {
+        if(mStatement != null) mStatement.close();
+        if(mResultSet != null) mResultSet.close();
+      } catch (SQLException e){
+        e.printStackTrace();
+      }
+    }
 
-    List<Double> sumCurrent = new ArrayList<>();
-    List<Double> sumLast = new ArrayList<>();
-
-    LOGGER.info("mapping to Ubis/Datel");
-    for (Ubis u : ubis) {
-      String name = u.getLocation();
-      String witel = u.getWitel();
-      Double target = u.getTarget();
-      List<String> sto = getSTO(conn, u.getLocation());
-      for (String s : sto) {
-        for (Result t : ttr) {
-          if(t.getLocation().equals(s)){
-            sumCurrent.add(t.getCurrentMonth());
-            sumLast.add(t.getLastMonth());
-          }
+    LOGGER.info("mapping to tpt...");
+    // building data
+    for (Ubis n : ubis) {
+      Double current = 0.0;
+      Double last = 0.0;
+      for (Result c : collectionsData) {
+        if(c.getLocation().equals(n.getLocation())){
+          last = c.getLastMonth();
+          current = c.getCurrentMonth();
         }
       }
-      ttrData.add(new Result(name, witel, average(sumCurrent), target, average(sumLast)));
-      sumCurrent.clear();
-      sumLast.clear();
+      data.add(new Result(n.getLocation(), n.getWitel(), current, n.getTarget(), last));
     }
-    LOGGER.info("sorting by achievement...");
-    Collections.sort(ttrData, new SortByAch());
-
-    LOGGER.info("Ubis/Datel process done...");
-    data.setData(DBHelper.GET_DATA_SUCESS, ttrData);
-    return data;
+    wrapper.setData(DBHelper.GET_DATA_SUCESS, data);
+    return wrapper;
   }
 
   private Double average(List<Double> data){

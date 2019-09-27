@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.servlet.learning.services.TTRService;
+import com.servlet.learning.SimpleTopDataWrapper;
 import com.servlet.learning.TopDataWrapper;
 import com.servlet.learning.obj.Result;
 import com.servlet.learning.obj.STO;
@@ -42,7 +43,39 @@ public class TopTerritoryController {
     return getAllData(bln);
   }
 
-  private TopDataWrapper getAllData(int bln){
+  @RequestMapping(value = "/toptpt", method = RequestMethod.GET)
+  public SimpleTopDataWrapper getTopDataTPT(@RequestParam int bln, @RequestParam String cls){
+    return getAllDataIndicatorTPT(bln, cls);
+  }
+
+  private SimpleTopDataWrapper getAllDataIndicatorTPT(int bln, String cls) {
+    List<Result> sales = new SalesService(bln, cls).getSalesTPTArray().getData();
+    List<Result> gaul = new GaulService(cls, bln).getGaulTPT().getData();
+    List<Result> c3mr = new CollectionsService(cls, bln).getCollectionsTPT().getData();
+    List<Result> ttr = new TTRService(cls, bln).getTTRtpt().getData();
+
+    List<STO> tpt = getSTOByClass(cls);
+    List<TopResult> top = mapDataTPT(sales, ttr, gaul, c3mr, tpt);
+    return new SimpleTopDataWrapper(DBHelper.GET_DATA_SUCESS, top);
+  }
+
+  @RequestMapping(value = "/topubis", method = RequestMethod.GET)
+  public SimpleTopDataWrapper getTopDataUbis(@RequestParam int bln){
+    return getAllDataIndicatorUbis(bln);
+  }
+
+  private SimpleTopDataWrapper getAllDataIndicatorUbis(int bln) {    
+    List<Result> salesUbis = new SalesService(bln, DBHelper.GET_ALL_STO).getSalesUbisArray().getData();
+    List<Result> gaulUbis = new GaulService(DBHelper.GET_ALL_STO, bln).getGaulUbis().getData();
+    List<Result> c3mrUbis = new CollectionsService(DBHelper.GET_ALL_STO, bln).getCollectionsUbis().getData();
+    List<Result> ttrUbis = new TTRService(DBHelper.GET_ALL_STO, bln).getTTRubis().getData();
+
+    List<Ubis> ubis = getAllUbis();
+    List<TopResult> top = mapDataUbis(salesUbis, ttrUbis, gaulUbis, c3mrUbis, ubis);
+    return new SimpleTopDataWrapper(DBHelper.GET_DATA_SUCESS, top);
+  }
+
+  private TopDataWrapper getAllData(int bln) {
     // Get All Sales Data
     List<Result> salesA = new SalesService(bln, "A").getSalesTPTArray().getData();
     List<Result> salesB = new SalesService(bln, "B").getSalesTPTArray().getData();
