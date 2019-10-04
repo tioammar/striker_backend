@@ -18,6 +18,8 @@ import com.servlet.learning.util.DBConnectNetezza;
 import com.servlet.learning.util.DBConnectSQL;
 import com.servlet.learning.util.DBHelper;
 
+import com.servlet.learning.util.SortByAch;
+
 public class SalesService {
 
   private int nBulan;
@@ -65,8 +67,8 @@ public class SalesService {
     List<Result> sales = new ArrayList<>();
     List<STO> sto = getSTObyClass();
     String stoList = buildString(sto);
-    // Connection conn = new DBConnectNetezza().getConnection();
-    Connection conn = new DBConnectSQL().getConnection();
+    Connection conn = new DBConnectNetezza().getConnection();
+    // Connection conn = new DBConnectSQL().getConnection();
 
     String querySQL = "SELECT sto, sum(currentmonth) as currentmonth, sum(lastmonth) as lastmonth"
     + " FROM ("
@@ -114,7 +116,7 @@ public class SalesService {
       // LOGGER.info(query);
       LOGGER.info("getting data...");
       mStatement = conn.createStatement();
-      mResultSet = mStatement.executeQuery(querySQL);
+      mResultSet = mStatement.executeQuery(query);
       while(mResultSet.next()){
         String name = mResultSet.getString("sto");
         Double current = mResultSet.getDouble("currentmonth");
@@ -280,10 +282,3 @@ public class SalesService {
     return sto;
   }
 }
-
-// sort descending
-class SortByAch implements Comparator<Result> { 
-    public int compare(Result a, Result b) { 
-        return b.getAchievement().intValue() - a.getAchievement().intValue(); 
-    } 
-} 

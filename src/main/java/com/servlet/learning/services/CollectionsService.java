@@ -13,7 +13,9 @@ import java.util.logging.Logger;
 import com.servlet.learning.ResultWrapper;
 import com.servlet.learning.obj.*;
 import com.servlet.learning.util.DBConnectSQL;
-import com.servlet.learning.util.DBHelper;;
+import com.servlet.learning.util.DBHelper;
+
+import com.servlet.learning.util.SortByAch;
 
 public class CollectionsService {
 
@@ -299,11 +301,3 @@ public class CollectionsService {
     return sto;
   }
 }
-
-// sort descending
-class SortByAch implements Comparator<Result> 
-{ 
-    public int compare(Result a, Result b) { 
-        return b.getAchievement().intValue() - a.getAchievement().intValue(); 
-    } 
-} 

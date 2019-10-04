@@ -6,14 +6,17 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
 import com.servlet.learning.ResultWrapper;
-import com.servlet.learning.obj.*;
+import com.servlet.learning.obj.Result;
+import com.servlet.learning.obj.STO;
+import com.servlet.learning.obj.Ubis;
 import com.servlet.learning.util.DBConnectSQL;
 import com.servlet.learning.util.DBHelper;
+
+import com.servlet.learning.util.SortByAch;
 
 public class GaulService {
 
@@ -304,10 +307,3 @@ public class GaulService {
     return sto;
   }
 }
-
-// sort descending
-class SortByAch implements Comparator<Result> { 
-    public int compare(Result a, Result b) { 
-        return b.getAchievement().intValue() - a.getAchievement().intValue(); 
-    } 
-} 
