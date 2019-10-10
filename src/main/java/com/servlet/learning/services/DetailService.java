@@ -114,8 +114,8 @@ public class DetailService {
   private List<Trend> getSalesUbis(String ubis){
     List<Trend> data = new ArrayList<>();
     
-    // Connection conn = new DBConnectNetezza().getConnection();
-    Connection conn = new DBConnectSQL().getConnection();
+    Connection conn = new DBConnectNetezza().getConnection();
+    // Connection conn = new DBConnectSQL().getConnection();
 
     String stoList = buildString(getSTO(new DBConnectSQL().getConnection(), ubis));
 
@@ -158,11 +158,11 @@ public class DetailService {
     + " group by TO_CHAR(tgl,'MM'))x"
     + " group by nmonth"
     + " order by nmonth";
-    LOGGER.info(querySQL);
+    // LOGGER.info(querySQL);
 
     try {
       mStatement = conn.createStatement();
-      mResultSet = mStatement.executeQuery(querySQL);
+      mResultSet = mStatement.executeQuery(query);
       while(mResultSet.next()){
         String month = mResultSet.getString("nmonth");
         Double ach = mResultSet.getDouble("ach");
@@ -184,8 +184,8 @@ public class DetailService {
 
   private List<Trend> getSalesTPT(){
     List<Trend> data = new ArrayList<>();
-    // Connection conn = new DBConnectNetezza().getConnection();
-    Connection conn = new DBConnectSQL().getConnection();
+    Connection conn = new DBConnectNetezza().getConnection();
+    // Connection conn = new DBConnectSQL().getConnection();
     String stoCode = getSTOcode();
 
     String querySQL = "SELECT nmonth, sum(ach) as ach"
@@ -227,11 +227,11 @@ public class DetailService {
     + " group by TO_CHAR(tgl,'MM'))x"
     + " group by nmonth"
     + " order by nmonth";
-    LOGGER.info(querySQL);
+    // LOGGER.info(querySQL);
 
     try {
       mStatement = conn.createStatement();
-      mResultSet = mStatement.executeQuery(querySQL);
+      mResultSet = mStatement.executeQuery(query);
       while(mResultSet.next()){
         String month = mResultSet.getString("nmonth");
         Double ach = mResultSet.getDouble("ach");
@@ -264,7 +264,7 @@ public class DetailService {
     + " select real_"+smonth+" as ach from real_"+table+" where location = '"+name+"'"
     + " union all"
     + " select real_"+month+" as ach from real_"+table+" where location = '"+name+"'";
-    LOGGER.info(query);
+    // LOGGER.info(query);
 
     try {
       int i = 2;
